@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace PSOVisualizer
@@ -14,42 +12,43 @@ namespace PSOVisualizer
             InitializeComponent();
         }
 
-        private Graphics g;
+        private const int XFieldWidth = 530;
+        private const int YFieldWidth = 530;
+        private const int BorderFieldWidth = 50;
         private int x;
         private int y;
-        private int direction = -1;
         private readonly Random randomizer;
-        private readonly Pen pen = new Pen(Color.Black);
         readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            g = pictureBox1.CreateGraphics();
-            timer1.Interval =2;
+            timer1.Interval =50;
             timer1.Start();
-
+            doubleBufferControl1.SetPoints(points);
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        private static Tuple<int, int> GetRangeStart(int rangeNumber)
         {
-            g.DrawLine(pen, 10, 10, 1234, 1000 );
+            var xStart = (rangeNumber % 3) * XFieldWidth + (rangeNumber % 3) * BorderFieldWidth ;
+            var yStart = (rangeNumber / 3) * YFieldWidth + (rangeNumber / 3) * BorderFieldWidth;
+            return new Tuple<int, int>(xStart, yStart);
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            doubleBufferControl1.Invalidate();
 
-            direction = randomizer.Next(5) < 4 ? 1 : -1;
-            x += randomizer.Next(3) * direction;
-            direction = randomizer.Next(5) < 4 ? 1 : -1;
-            y += randomizer.Next(3) * direction;
-            points.Add(new Tuple<int, int>(x,y));
-
-            if (points.Count % 50 == 0 )
-                g.Clear(Color.Beige);
-            g.DrawString(points.Count.ToString(),new Font(new FontFamily(GenericFontFamilies.SansSerif),12), new SolidBrush(Color.Black), 500, 100);
-            foreach (var point in points)
+            points.Clear();
+            for (int i = 0; i < 6; i++)
             {
-                g.DrawLine(pen, point.Item1, point.Item2, point.Item1+2, point.Item2+2 );
+                var rangeStart = GetRangeStart(i);
+                for (int j = 0; j < 6000; j++)
+                {
+                    x = randomizer.Next(XFieldWidth);
+                    y = randomizer.Next(YFieldWidth);
+                    points.Add(new Tuple<int, int>(x + rangeStart.Item1, y + rangeStart.Item2));
+                }
+                
             }
         }
 
