@@ -112,6 +112,7 @@ namespace PSOVisualizer
                     j++;
                 }
                 errorSum += xSum*xSum;
+                //0.0004, 19, 4, 34, 0.00464, 0.00272, 234, 6, 12, 0.00112, 0.00176
             }
             return Math.Sqrt(errorSum);
         }
