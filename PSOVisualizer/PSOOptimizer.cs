@@ -1,10 +1,13 @@
-﻿namespace PSOVisualizer
+﻿using System.Collections.Generic;
+
+namespace PSOVisualizer
 {
     class PSOOptimizer
     {
-        public PSOOptimizer(int dimensions)
+        public PSOOptimizer(PSOConfiguration config)
         {
-            this.dimensions = dimensions;
+            dimensions = config.DataLimits.Count;
+            this.config = config;
         }
 
 /*
@@ -26,5 +29,77 @@
  * While maximum iterations or minimum error criteria is not attained
  */
         private int dimensions=0;
+        private PSOConfiguration config;
+    }
+
+    internal class PSOConfiguration
+    {
+        public PSOConfiguration()
+        {
+            Spread = 0.00016;
+            Pip = Spread/2;
+            Omega = 0.85;
+            PhiSwarm  = 0.65;
+            PhiParticle = 0.45;
+            DataLimits = new List<RangeDefinition>
+                {
+                    new RangeDefinition(-20*Pip, 20*Pip, ""),
+                    new RangeDefinition(17, 24, ""),
+                    new RangeDefinition(1, 7,""),
+                    new RangeDefinition(4, 50,""),
+                    new RangeDefinition(8*Spread, 48*Spread,""),
+                    new RangeDefinition(8*Spread, 48*Spread,""),
+                    new RangeDefinition(100, 500,""),
+                    new RangeDefinition(4, 9,""),
+                    new RangeDefinition(3, 18,""),
+                    new RangeDefinition(5*Spread, 10*Spread,""),
+                    new RangeDefinition(3*Spread,15*Spread,"")
+
+                };
+            NumOfParticles = 250;
+            VelocityLimits  = new List<RangeDefinition>
+                {
+                    GetTypicalRangeDefinition(), GetTypicalRangeDefinition(), GetTypicalRangeDefinition(), 
+                    GetTypicalRangeDefinition(), GetTypicalRangeDefinition(), GetTypicalRangeDefinition(),
+                    GetTypicalRangeDefinition(), GetTypicalRangeDefinition(), GetTypicalRangeDefinition(), 
+                    GetTypicalRangeDefinition(), GetTypicalRangeDefinition()
+                };
+            MaxIterNum = 110;
+            BestPositionTimeout = 9999999;
+        }
+
+        private static RangeDefinition GetTypicalRangeDefinition()
+        {
+            return new RangeDefinition(0.1, 0.9,"");
+        }
+
+        public double Spread { get; set; }
+        public double Pip { get; set; }
+        public double Omega { get; set; }
+        public double PhiSwarm { get; set; }
+        public double PhiParticle { get; set; }
+        public List<RangeDefinition> DataLimits { get; set; }
+        public double NumOfParticles { get; set; }
+        public List<RangeDefinition> VelocityLimits { get; set; }
+        public double MaxIterNum { get; set; }
+        public double BestPositionTimeout { get; set; }
+    }
+    
+    public class RangeDefinition //TODO: maybe Internal Range for other algorithms? (PSO can pass entire Range)
+    {
+        public RangeDefinition(double start, double stop, double step, string name)
+        {
+            Start = start;
+            Stop = stop;
+            Step = step;
+            Name = name;
+        }
+
+        public string Name {get; set;}
+
+        public RangeDefinition(double start, double stop, string name) : this(start, stop, 1, name) { }
+        public double Start { get; set; }
+        public double Stop { get; set; }
+        public double Step { get; set; }
     }
 }
