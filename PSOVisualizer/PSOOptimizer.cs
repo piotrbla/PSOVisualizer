@@ -14,17 +14,17 @@ namespace PSOVisualizer
         private readonly int dimensions=0;
         private readonly PSOConfiguration config;
         private int counter=0;
+        private Random randomizer;
 
         public void Start()
         {
+            randomizer = new Random(DateTime.Now.Millisecond);
             particles = new List<List<double>>(config.NumOfParticles);
             for (var i = 0; i < config.NumOfParticles; i++)
             {
                 var particle = new List<double>(dimensions);
                 for (var j = 0; j < dimensions; j++)
-                {
-                    particle.Add((i >> j) % 2 != 0 ? config.DataLimits[j].Start : config.DataLimits[j].Stop);
-                }
+                    particle.Add(randomizer.NextDouble() * (config.DataLimits[j].Stop - config.DataLimits[j].Start) + config.DataLimits[j].Start);
                 particles.Add(particle);
             }
         }
@@ -60,7 +60,9 @@ namespace PSOVisualizer
              *   Choose the particle with the best fitness value of all the particles as the gBest
              *   For each particle
              *       Calculate particle velocity according equation (a)
+             *          v[] = v[] + c1 * rand() * (pbest[] - present[]) + c2 * rand() * (gbest[] - present[]) (a)
              *       Update particle position according equation (b)
+             *          present[] = present[] + v[] (b)
              *   End
              * While maximum iterations or minimum error criteria is not attained
              */
@@ -91,8 +93,10 @@ namespace PSOVisualizer
             //While maximum iterations or minimum error criteria is not attained
             return counter > config.BestPositionTimeout;
         }
-        
+
         private List<List<double>> particles;
+        private List<List<double>> particlesBest;
+        private List<double> globalBest;
     }
 
     internal class PSOConfiguration

@@ -52,7 +52,7 @@ namespace PSOVisualizer
             configuration.AddDataLimit(5*spread, 10*spread, "");
             configuration.AddDataLimit(3*spread, 15*spread, "");
 
-            optimizer = new PSOOptimizer(configuration);
+            optimizer = new PSOOptimizer(configuration);//TODO: Add fitness function (ie strategy definition)
             optimizer.Start();
         }
 
