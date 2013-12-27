@@ -10,7 +10,8 @@ namespace PSOVisualizer
         const Graphics NoBufferGraphics = null;
         const Bitmap NoBackBuffer = null;
         const BufferedGraphics NoManagedBackBuffer = null;
-	    private List<Tuple<int, int>> points;
+        private List<Tuple<int, int>> points;
+        private List<Tuple<int, int, int, int>> borders;
         Bitmap backBuffer;
         Graphics bufferGraphics;
         BufferedGraphicsContext graphicManager;
@@ -22,6 +23,10 @@ namespace PSOVisualizer
         public void SetPoints(List<Tuple<int, int>> pointList)
         {
             points = pointList;
+        }
+        public void SetBorders(List<Tuple<int, int, int, int>> borderList)
+        {
+            borders = borderList;
         }
         public DoubleBufferControl()
         {
@@ -202,6 +207,11 @@ namespace PSOVisualizer
             {
                 colorPen = new Pen(Color.FromArgb(127, random.Next(0, 256), random.Next(256), random.Next(256)));
                 tempGraphics.DrawLine(colorPen, point.Item1, point.Item2, point.Item1+2, point.Item2+2 );
+            }
+            foreach (var border in borders)
+            {
+                colorPen = new Pen(Color.Blue);
+                tempGraphics.DrawLine(colorPen, border.Item1, border.Item2, border.Item3, border.Item4);
             }
             if (colorPen != null) colorPen.Dispose();
         }

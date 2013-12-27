@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PSOVisualizer
 {
@@ -10,22 +11,47 @@ namespace PSOVisualizer
             this.config = config;
         }
 
-        private int dimensions=0;
-        private PSOConfiguration config;
-        private double counter=0;
+        private readonly int dimensions=0;
+        private readonly PSOConfiguration config;
+        private int counter=0;
 
         public void Start()
         {
-            /*
-             * For each particle
-             *  Initialize particle
-             * END
-             */
+            particles = new List<List<double>>(config.NumOfParticles);
+            for (var i = 0; i < config.NumOfParticles; i++)
+            {
+                var particle = new List<double>(dimensions);
+                for (var j = 0; j < dimensions; j++)
+                {
+                    particle.Add((i >> j) % 2 != 0 ? config.DataLimits[j].Start : config.DataLimits[j].Stop);
+                }
+                particles.Add(particle);
+            }
         }
+
+        public int GetNumberOfParticles()
+        {
+            return config.NumOfParticles;
+        }
+
         public void Step()
         {
-            /*
-             * Do
+            var index = 0;
+            foreach (var particle in particles)
+            {
+                for (var i = 0; i < dimensions; i++)
+                {
+                    var startDiff = Math.Abs(config.DataLimits[i].Start - particle[i]);
+                    var stopDiff = Math.Abs(config.DataLimits[i].Stop - particle[i]);
+                    var limitsDiffPercent = Math.Abs(config.DataLimits[i].Stop - config.DataLimits[i].Start) / 100;
+                    if (startDiff > stopDiff)
+                        particle[i] -= limitsDiffPercent * (index % 5);
+                    else
+                        particle[i] += limitsDiffPercent * (index % 5);
+                }
+                index++;
+            }
+            /* Do
              *   For each particle
              *       Calculate fitness value
              *       If the fitness value is better than the best fitness value (pBest) in history
@@ -40,11 +66,33 @@ namespace PSOVisualizer
              */
             counter++;
         }
+        
+        public Tuple<double,double> Get2DPoint(int particleIndex, int dimensionX, int dimensionY)
+        {
+            if (dimensionX >= dimensions) dimensionX = dimensions - 1;
+            if (dimensionY >= dimensions) dimensionY = dimensions - 1;//TODO: think about odd number of dimensions
+            return new Tuple<double, double>
+                (
+                    GetValueScaled(particleIndex, dimensionX), 
+                    GetValueScaled(particleIndex,dimensionY)
+                );
+        }
+
+        private double GetValueScaled(int particleIndex, int dimension)
+        {
+            return 
+                (particles[particleIndex][dimension] - config.DataLimits[dimension].Start) 
+                / 
+                (config.DataLimits[dimension].Stop - config.DataLimits[dimension].Start);
+        }
+
         public bool IsDone()
         {
             //While maximum iterations or minimum error criteria is not attained
             return counter > config.BestPositionTimeout;
         }
+        
+        private List<List<double>> particles;
     }
 
     internal class PSOConfiguration
@@ -61,12 +109,12 @@ namespace PSOVisualizer
             VelocityLimits = new List<RangeDefinition>(dimensions);
         }
 
-        private void AddDataLimit(double start, double stop, string name)
+        public void AddDataLimit(double start, double stop, string name)
         {
             DataLimits.Add(new RangeDefinition(start, stop, name));
         }
 
-        private void AddTypicalVelocityLimit()
+        public void AddTypicalVelocityLimit()
         {
             VelocityLimits.Add(GetTypicalRangeDefinition());
         }
@@ -117,10 +165,10 @@ namespace PSOVisualizer
         public double PhiSwarm { get; set; }
         public double PhiParticle { get; set; }
         public List<RangeDefinition> DataLimits { get; set; }
-        public double NumOfParticles { get; set; }
+        public int NumOfParticles { get; set; }
         public List<RangeDefinition> VelocityLimits { get; set; }
         public double MaxIterNum { get; set; }
-        public double BestPositionTimeout { get; set; }
+        public int BestPositionTimeout { get; set; }
         private int dimensions = 0;
     }
     

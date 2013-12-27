@@ -8,30 +8,50 @@ namespace PSOVisualizer
     {
         public Form1()
         {
-            randomizer = new Random(DateTime.Now.Millisecond);
             InitializeComponent();
         }
 
         private const int XFieldWidth = 530;
         private const int YFieldWidth = 530;
         private const int BorderFieldWidth = 50;
-        private int x;
-        private int y;
-        private readonly Random randomizer;
         private PSOOptimizer optimizer;
         readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
+        readonly List<Tuple<int, int, int, int>> borders = new List<Tuple<int, int, int, int>>();
 
         private void Form1_Load(object sender, EventArgs e)
         {
             timer1.Interval =50;
             timer1.Start();
             doubleBufferControl1.SetPoints(points);
+            for (var i = 0; i < 6; i++)
+            {
+                var rangeStart = GetRangeStart(i);
+                borders.Add(new Tuple<int, int, int, int>(rangeStart.Item1, rangeStart.Item2, rangeStart.Item1 + XFieldWidth, rangeStart.Item2));
+                borders.Add(new Tuple<int, int, int, int>(rangeStart.Item1, rangeStart.Item2, rangeStart.Item1, rangeStart.Item2 + YFieldWidth));
+                borders.Add(new Tuple<int, int, int, int>(rangeStart.Item1 + XFieldWidth, rangeStart.Item2, rangeStart.Item1 + XFieldWidth, rangeStart.Item2 + YFieldWidth));
+                borders.Add(new Tuple<int, int, int, int>(rangeStart.Item1, rangeStart.Item2 + YFieldWidth, rangeStart.Item1 + XFieldWidth, rangeStart.Item2 + YFieldWidth));
+            }
+            doubleBufferControl1.SetBorders(borders);
             CheckNotSoSimplePSO();
         }
 
         private void CheckNotSoSimplePSO()
         {
-            var configuration = new PSOConfiguration(11) {BestPositionTimeout = 100, NumOfParticles = 250};
+            const double spread = 0.00016;
+            const double pip = spread/2;
+            var configuration = new PSOConfiguration(11) {Spread = spread, BestPositionTimeout = 1000, NumOfParticles = 6000};
+            configuration.AddDataLimit(-20*pip, 20*pip, "");
+            configuration.AddDataLimit(17, 24, "");
+            configuration.AddDataLimit(1, 7, "");
+            configuration.AddDataLimit(4, 50, "");
+            configuration.AddDataLimit(8*spread, 48*spread, "");
+            configuration.AddDataLimit(8*spread, 48*spread, "");
+            configuration.AddDataLimit(100, 500, "");
+            configuration.AddDataLimit(4, 9, "");
+            configuration.AddDataLimit(3, 18, "");
+            configuration.AddDataLimit(5*spread, 10*spread, "");
+            configuration.AddDataLimit(3*spread, 15*spread, "");
+
             optimizer = new PSOOptimizer(configuration);
             optimizer.Start();
         }
@@ -48,14 +68,16 @@ namespace PSOVisualizer
             doubleBufferControl1.Invalidate();
 
             points.Clear();
-            for (int i = 0; i < 6; i++)
+            for (var i = 0; i < 6; i++)
             {
                 var rangeStart = GetRangeStart(i);
-                for (int j = 0; j < 6000; j++)
+                for (var j = 0; j < optimizer.GetNumberOfParticles(); j++)
                 {
-                    x = randomizer.Next(XFieldWidth);
-                    y = randomizer.Next(YFieldWidth);
-                    points.Add(new Tuple<int, int>(x + rangeStart.Item1, y + rangeStart.Item2));//TODO: optimizer.GetPoints(dimX:i*2, dimY:i*2+1)
+                    var point = optimizer.Get2DPoint(j, i*2, i*2 + 1);
+                    points.Add(new Tuple<int, int>(
+                        (int) (point.Item1 * XFieldWidth + rangeStart.Item1), 
+                        (int) (point.Item2 * YFieldWidth + rangeStart.Item2))
+                    );
                 }
                 
             }
