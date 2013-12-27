@@ -11,22 +11,35 @@ namespace PSOVisualizer
             this.config = config;
         }
 
-        private readonly int dimensions=0;
-        private readonly PSOConfiguration config;
-        private int counter=0;
-        private Random randomizer;
-
         public void Start()
         {
             randomizer = new Random(DateTime.Now.Millisecond);
             particles = new List<List<double>>(config.NumOfParticles);
+            particlesBest = new List<List<double>>(config.NumOfParticles);
+            particlesBestValue = new List<double>(dimensions);
+            globalBest = new List<double>(dimensions);
             for (var i = 0; i < config.NumOfParticles; i++)
             {
                 var particle = new List<double>(dimensions);
+                var particleBest = new List<double>(dimensions);
                 for (var j = 0; j < dimensions; j++)
-                    particle.Add(randomizer.NextDouble() * (config.DataLimits[j].Stop - config.DataLimits[j].Start) + config.DataLimits[j].Start);
+                {
+                    var value = randomizer.NextDouble()*(config.DataLimits[j].Stop - config.DataLimits[j].Start) +
+                                config.DataLimits[j].Start;
+                    particle.Add(value);
+                    particleBest.Add(value);
+                }
                 particles.Add(particle);
+                particlesBest.Add(particleBest);
+                particlesBestValue.Add(MaxValue);
             }
+            for (var j = 0; j < dimensions; j++)
+            {
+                particlesBestValue.Add(MaxValue);
+                globalBest.Add(0);
+            }
+            globalBestValue = MaxValue;
+
         }
 
         public int GetNumberOfParticles()
@@ -37,6 +50,10 @@ namespace PSOVisualizer
         public void Step()
         {
             var index = 0;
+            foreach (var particle in particles)
+            {
+                double value = CalculateFitnessValue(particle);
+            }
             foreach (var particle in particles)
             {
                 for (var i = 0; i < dimensions; i++)
@@ -68,7 +85,35 @@ namespace PSOVisualizer
              */
             counter++;
         }
-        
+
+        private double CalculateFitnessValue(List<double> particle)
+        {
+            //testing fitness function
+            var errorSum = 0D;
+            for (int i = 0; i < 10; i++)
+            {
+                int j = 0;
+                var xSum = 0D;
+                foreach (var v in particle)
+                {
+                    var x = v*Math.Pow(i, j);
+                    xSum += x;
+                    j++;
+                }
+                const double spread = 0.00016;
+                const double pip = spread / 2;
+                j = 0;
+                foreach (var d in new List<double> { 5 * pip, 19, 4, 34, 29 * spread, 17 * spread, 234, 6, 12, 7 * spread, 11 * spread })
+                {
+                    var x = d * Math.Pow(i, j);
+                    xSum -= x;
+                    j++;
+                }
+                errorSum += xSum*xSum;
+            }
+            return Math.Sqrt(errorSum);
+        }
+
         public Tuple<double,double> Get2DPoint(int particleIndex, int dimensionX, int dimensionY)
         {
             if (dimensionX >= dimensions) dimensionX = dimensions - 1;
@@ -94,9 +139,17 @@ namespace PSOVisualizer
             return counter > config.BestPositionTimeout;
         }
 
+        const double MaxValue = 999999;
+        private readonly int dimensions = 0;
+        private readonly PSOConfiguration config;
+        private int counter = 0;
+        private Random randomizer;
         private List<List<double>> particles;
         private List<List<double>> particlesBest;
         private List<double> globalBest;
+        private List<double> particlesBestValue;
+        private double globalBestValue;
+
     }
 
     internal class PSOConfiguration
