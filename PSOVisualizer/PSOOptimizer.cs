@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PSOVisualizer
 {
@@ -14,32 +15,34 @@ namespace PSOVisualizer
         public void Start()
         {
             randomizer = new Random(DateTime.Now.Millisecond);
-            particles = new List<List<double>>(config.NumOfParticles);
-            particlesBest = new List<List<double>>(config.NumOfParticles);
+            particles = new List<List<double>>(GetNumberOfParticles());
+            particlesBest = new List<List<double>>(GetNumberOfParticles());
+            particlesVelocities = new List<List<double>>(GetNumberOfParticles());
             particlesBestValue = new List<double>(dimensions);
             globalBest = new List<double>(dimensions);
             for (var i = 0; i < config.NumOfParticles; i++)
             {
                 var particle = new List<double>(dimensions);
                 var particleBest = new List<double>(dimensions);
+                var particleVelocities = new List<double>(dimensions);
                 for (var j = 0; j < dimensions; j++)
                 {
                     var value = randomizer.NextDouble()*(config.DataLimits[j].Stop - config.DataLimits[j].Start) +
                                 config.DataLimits[j].Start;
                     particle.Add(value);
                     particleBest.Add(value);
+                    particleVelocities.Add(0);
                 }
                 particles.Add(particle);
                 particlesBest.Add(particleBest);
+                particlesVelocities.Add(particleVelocities);
                 particlesBestValue.Add(MaxValue);
             }
             for (var j = 0; j < dimensions; j++)
             {
-                particlesBestValue.Add(MaxValue);
                 globalBest.Add(0);
             }
             globalBestValue = MaxValue;
-
         }
 
         public int GetNumberOfParticles()
@@ -49,40 +52,39 @@ namespace PSOVisualizer
 
         public void Step()
         {
-            var index = 0;
-            foreach (var particle in particles)
+            const double c1 = 2;
+            const double c2 = 2;
+            for (var i = 0; i < particles.Count; i++)
             {
-                double value = CalculateFitnessValue(particle);
+                var particle = particles[i];
+                var value = CalculateFitnessValue(particle);
+                if (value < particlesBestValue[i])
+                {
+                    particlesBestValue[i] = value;
+                    particlesBest[i]= particle.ToList();
+                }
+                if (value<globalBestValue)
+                {
+                    globalBestValue = value;
+                    globalBest = particle.ToList();
+                }
             }
-            foreach (var particle in particles)
+            for (int j = 0; j < particles.Count; j++)
             {
+                var particle = particles[j];
+                //v[] = v[] + c1 * rand() * (pbest[] - present[]) + c2 * rand() * (gbest[] - present[]) http://www.swarmintelligence.org/tutorials.php
                 for (var i = 0; i < dimensions; i++)
                 {
-                    var startDiff = Math.Abs(config.DataLimits[i].Start - particle[i]);
-                    var stopDiff = Math.Abs(config.DataLimits[i].Stop - particle[i]);
-                    var limitsDiffPercent = Math.Abs(config.DataLimits[i].Stop - config.DataLimits[i].Start) / 100;
-                    if (startDiff > stopDiff)
-                        particle[i] -= limitsDiffPercent * (index % 5);
-                    else
-                        particle[i] += limitsDiffPercent * (index % 5);
+                    particlesVelocities[j][i] = particlesVelocities[j][i] +
+                                                c1*randomizer.NextDouble()*(particlesBest[j][i] - particle[i]) +
+                                                c2*randomizer.NextDouble()*(globalBest[i] - particle[i]);
+                    particle[i] += particlesVelocities[j][i];
+                    if (particle[i] < config.DataLimits[i].Start)
+                        particle[i] = config.DataLimits[i].Start;
+                    if (particle[i] > config.DataLimits[i].Stop)
+                        particle[i] = config.DataLimits[i].Stop;
                 }
-                index++;
             }
-            /* Do
-             *   For each particle
-             *       Calculate fitness value
-             *       If the fitness value is better than the best fitness value (pBest) in history
-             *           set current value as the new pBest
-             *   End For
-             *   Choose the particle with the best fitness value of all the particles as the gBest
-             *   For each particle
-             *       Calculate particle velocity according equation (a)
-             *          v[] = v[] + c1 * rand() * (pbest[] - present[]) + c2 * rand() * (gbest[] - present[]) (a)
-             *       Update particle position according equation (b)
-             *          present[] = present[] + v[] (b)
-             *   End
-             * While maximum iterations or minimum error criteria is not attained
-             */
             counter++;
         }
 
@@ -146,6 +148,7 @@ namespace PSOVisualizer
         private Random randomizer;
         private List<List<double>> particles;
         private List<List<double>> particlesBest;
+        private List<List<double>> particlesVelocities;
         private List<double> globalBest;
         private List<double> particlesBestValue;
         private double globalBestValue;
