@@ -18,6 +18,7 @@ namespace PSOVisualizer
         private int x;
         private int y;
         private readonly Random randomizer;
+        private PSOOptimizer optimizer;
         readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
 
         private void Form1_Load(object sender, EventArgs e)
@@ -25,6 +26,14 @@ namespace PSOVisualizer
             timer1.Interval =50;
             timer1.Start();
             doubleBufferControl1.SetPoints(points);
+            CheckNotSoSimplePSO();
+        }
+
+        private void CheckNotSoSimplePSO()
+        {
+            var configuration = new PSOConfiguration(11) {BestPositionTimeout = 100, NumOfParticles = 250};
+            optimizer = new PSOOptimizer(configuration);
+            optimizer.Start();
         }
 
         private static Tuple<int, int> GetRangeStart(int rangeNumber)
@@ -46,10 +55,13 @@ namespace PSOVisualizer
                 {
                     x = randomizer.Next(XFieldWidth);
                     y = randomizer.Next(YFieldWidth);
-                    points.Add(new Tuple<int, int>(x + rangeStart.Item1, y + rangeStart.Item2));
+                    points.Add(new Tuple<int, int>(x + rangeStart.Item1, y + rangeStart.Item2));//TODO: optimizer.GetPoints(dimX:i*2, dimY:i*2+1)
                 }
                 
             }
+            optimizer.Step();
+            if (optimizer.IsDone())
+                timer1.Stop();
         }
 
 

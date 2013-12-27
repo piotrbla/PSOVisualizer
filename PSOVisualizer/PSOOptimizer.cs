@@ -10,32 +10,70 @@ namespace PSOVisualizer
             this.config = config;
         }
 
-/*
- * For each particle
- *  Initialize particle
- * END
-
- * Do
- *   For each particle
- *       Calculate fitness value
- *       If the fitness value is better than the best fitness value (pBest) in history
- *           set current value as the new pBest
- *   End For
- *   Choose the particle with the best fitness value of all the particles as the gBest
- *   For each particle
- *       Calculate particle velocity according equation (a)
- *       Update particle position according equation (b)
- *   End
- * While maximum iterations or minimum error criteria is not attained
- */
         private int dimensions=0;
         private PSOConfiguration config;
+        private double counter=0;
+
+        public void Start()
+        {
+            /*
+             * For each particle
+             *  Initialize particle
+             * END
+             */
+        }
+        public void Step()
+        {
+            /*
+             * Do
+             *   For each particle
+             *       Calculate fitness value
+             *       If the fitness value is better than the best fitness value (pBest) in history
+             *           set current value as the new pBest
+             *   End For
+             *   Choose the particle with the best fitness value of all the particles as the gBest
+             *   For each particle
+             *       Calculate particle velocity according equation (a)
+             *       Update particle position according equation (b)
+             *   End
+             * While maximum iterations or minimum error criteria is not attained
+             */
+            counter++;
+        }
+        public bool IsDone()
+        {
+            //While maximum iterations or minimum error criteria is not attained
+            return counter > config.BestPositionTimeout;
+        }
     }
 
     internal class PSOConfiguration
     {
         public PSOConfiguration()
         {
+            SetTestingValues();
+        }
+
+        public PSOConfiguration(int dimensions)
+        {
+            this.dimensions = dimensions;
+            DataLimits = new List<RangeDefinition>(dimensions);
+            VelocityLimits = new List<RangeDefinition>(dimensions);
+        }
+
+        private void AddDataLimit(double start, double stop, string name)
+        {
+            DataLimits.Add(new RangeDefinition(start, stop, name));
+        }
+
+        private void AddTypicalVelocityLimit()
+        {
+            VelocityLimits.Add(GetTypicalRangeDefinition());
+        }
+        
+        private void SetTestingValues()
+        {
+            dimensions = 11;
             Spread = 0.00016;
             Pip = Spread/2;
             Omega = 0.85;
@@ -83,6 +121,7 @@ namespace PSOVisualizer
         public List<RangeDefinition> VelocityLimits { get; set; }
         public double MaxIterNum { get; set; }
         public double BestPositionTimeout { get; set; }
+        private int dimensions = 0;
     }
     
     public class RangeDefinition //TODO: maybe Internal Range for other algorithms? (PSO can pass entire Range)
