@@ -52,8 +52,9 @@ namespace PSOVisualizer
 
         public void Step()
         {
-            const double c1 = 2;
-            const double c2 = 2;
+            const double phiParticleParameter = 0.7;
+            const double phiSwarmParameter = 0.9;
+            const double omegaSwarmParameter = 0.85;
             for (var i = 0; i < particles.Count; i++)
             {
                 var particle = particles[i];
@@ -75,9 +76,21 @@ namespace PSOVisualizer
                 //v[] = v[] + c1 * rand() * (pbest[] - present[]) + c2 * rand() * (gbest[] - present[]) http://www.swarmintelligence.org/tutorials.php
                 for (var i = 0; i < dimensions; i++)
                 {
-                    particlesVelocities[j][i] = particlesVelocities[j][i] +
-                                                c1*randomizer.NextDouble()*(particlesBest[j][i] - particle[i]) +
-                                                c2*randomizer.NextDouble()*(globalBest[i] - particle[i]);
+                    var limitsDiff = config.DataLimits[i].Stop - config.DataLimits[i].Start;
+                    particlesVelocities[j][i] = omegaSwarmParameter * particlesVelocities[j][i] +
+                                                phiParticleParameter * randomizer.NextDouble() * (particlesBest[j][i] - particle[i]) +
+                                                phiSwarmParameter*randomizer.NextDouble()*(globalBest[i] - particle[i]);
+                    if (particlesVelocities[j][i] > maxVelocityPercent * limitsDiff)
+                    {
+                        particlesVelocities[j][i] = maxVelocityPercent * limitsDiff;
+                        SetVelocitiesPenalties();
+                    }
+                    if (particlesVelocities[j][i] < -maxVelocityPercent * limitsDiff)
+                    {
+                        particlesVelocities[j][i] = -maxVelocityPercent * limitsDiff;
+                        SetVelocitiesPenalties();
+                    }
+
                     particle[i] += particlesVelocities[j][i];
                     if (particle[i] < config.DataLimits[i].Start)
                         particle[i] = config.DataLimits[i].Start;
@@ -88,11 +101,20 @@ namespace PSOVisualizer
             counter++;
         }
 
+        private void SetVelocitiesPenalties()
+        {
+            maxVelocityPercent *= velocityPenaltyPercent;
+            if (maxVelocityPercent < 0.1)
+                velocityPenaltyPercent = 1.02;
+            if (maxVelocityPercent > 0.9)
+                velocityPenaltyPercent = 0.98;
+        }
+
         private double CalculateFitnessValue(List<double> particle)
         {
             //testing fitness function
             var errorSum = 0D;
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i < 8; i++)
             {
                 int j = 0;
                 var xSum = 0D;
@@ -143,6 +165,7 @@ namespace PSOVisualizer
         }
 
         const double MaxValue = 999999;
+        private double maxVelocityPercent = 0.99;
         private readonly int dimensions = 0;
         private readonly PSOConfiguration config;
         private int counter = 0;
@@ -153,6 +176,7 @@ namespace PSOVisualizer
         private List<double> globalBest;
         private List<double> particlesBestValue;
         private double globalBestValue;
+        double velocityPenaltyPercent = 0.98;
 
     }
 

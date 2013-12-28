@@ -11,13 +11,6 @@ namespace PSOVisualizer
             InitializeComponent();
         }
 
-        private const int XFieldWidth = 530;
-        private const int YFieldWidth = 530;
-        private const int BorderFieldWidth = 50;
-        private PSOOptimizer optimizer;
-        readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
-        readonly List<Tuple<int, int, int, int>> borders = new List<Tuple<int, int, int, int>>();
-
         private void Form1_Load(object sender, EventArgs e)
         {
             timer1.Interval =50;
@@ -63,8 +56,12 @@ namespace PSOVisualizer
             return new Tuple<int, int>(xStart, yStart);
         }
 
+        
         private void timer1_Tick(object sender, EventArgs e)
         {
+            if(timerWorks)
+                return;
+            timerWorks = true;
             doubleBufferControl1.Invalidate();
 
             points.Clear();
@@ -84,7 +81,16 @@ namespace PSOVisualizer
             optimizer.Step();
             if (optimizer.IsDone())
                 timer1.Stop();
+            timerWorks = false;
         }
+
+        private const int XFieldWidth = 530;
+        private const int YFieldWidth = 530;
+        private const int BorderFieldWidth = 50;
+        private PSOOptimizer optimizer;
+        private bool timerWorks = false;
+        readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
+        readonly List<Tuple<int, int, int, int>> borders = new List<Tuple<int, int, int, int>>();
 
 
     }
