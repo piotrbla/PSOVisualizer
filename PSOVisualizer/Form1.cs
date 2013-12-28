@@ -88,7 +88,7 @@ namespace PSOVisualizer
         private const int YFieldWidth = 530;
         private const int BorderFieldWidth = 50;
         private PSOOptimizer optimizer;
-        private bool timerWorks = false;
+        private bool timerWorks;
         readonly List<Tuple<int, int>> points = new List<Tuple<int, int>>();
         readonly List<Tuple<int, int, int, int>> borders = new List<Tuple<int, int, int, int>>();
 

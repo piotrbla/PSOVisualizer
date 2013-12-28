@@ -76,20 +76,9 @@ namespace PSOVisualizer
                 //v[] = v[] + c1 * rand() * (pbest[] - present[]) + c2 * rand() * (gbest[] - present[]) http://www.swarmintelligence.org/tutorials.php
                 for (var i = 0; i < dimensions; i++)
                 {
-                    var limitsDiff = config.DataLimits[i].Stop - config.DataLimits[i].Start;
                     particlesVelocities[j][i] = omegaSwarmParameter * particlesVelocities[j][i] +
                                                 phiParticleParameter * randomizer.NextDouble() * (particlesBest[j][i] - particle[i]) +
                                                 phiSwarmParameter*randomizer.NextDouble()*(globalBest[i] - particle[i]);
-                    if (particlesVelocities[j][i] > maxVelocityPercent * limitsDiff)
-                    {
-                        particlesVelocities[j][i] = maxVelocityPercent * limitsDiff;
-                        SetVelocitiesPenalties();
-                    }
-                    if (particlesVelocities[j][i] < -maxVelocityPercent * limitsDiff)
-                    {
-                        particlesVelocities[j][i] = -maxVelocityPercent * limitsDiff;
-                        SetVelocitiesPenalties();
-                    }
 
                     particle[i] += particlesVelocities[j][i];
                     if (particle[i] < config.DataLimits[i].Start)
@@ -99,15 +88,6 @@ namespace PSOVisualizer
                 }
             }
             counter++;
-        }
-
-        private void SetVelocitiesPenalties()
-        {
-            maxVelocityPercent *= velocityPenaltyPercent;
-            if (maxVelocityPercent < 0.1)
-                velocityPenaltyPercent = 1.02;
-            if (maxVelocityPercent > 0.9)
-                velocityPenaltyPercent = 0.98;
         }
 
         private double CalculateFitnessValue(List<double> particle)
@@ -165,10 +145,9 @@ namespace PSOVisualizer
         }
 
         const double MaxValue = 999999;
-        private double maxVelocityPercent = 0.99;
-        private readonly int dimensions = 0;
+        private readonly int dimensions;
         private readonly PSOConfiguration config;
-        private int counter = 0;
+        private int counter;
         private Random randomizer;
         private List<List<double>> particles;
         private List<List<double>> particlesBest;
@@ -176,8 +155,6 @@ namespace PSOVisualizer
         private List<double> globalBest;
         private List<double> particlesBestValue;
         private double globalBestValue;
-        double velocityPenaltyPercent = 0.98;
-
     }
 
     internal class PSOConfiguration
@@ -189,7 +166,6 @@ namespace PSOVisualizer
 
         public PSOConfiguration(int dimensions)
         {
-            this.dimensions = dimensions;
             DataLimits = new List<RangeDefinition>(dimensions);
             VelocityLimits = new List<RangeDefinition>(dimensions);
         }
@@ -206,7 +182,6 @@ namespace PSOVisualizer
         
         private void SetTestingValues()
         {
-            dimensions = 11;
             Spread = 0.00016;
             Pip = Spread/2;
             Omega = 0.85;
@@ -254,7 +229,6 @@ namespace PSOVisualizer
         public List<RangeDefinition> VelocityLimits { get; set; }
         public double MaxIterNum { get; set; }
         public int BestPositionTimeout { get; set; }
-        private int dimensions = 0;
     }
     
     public class RangeDefinition //TODO: maybe Internal Range for other algorithms? (PSO can pass entire Range)
